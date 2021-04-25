@@ -143,6 +143,7 @@ class sergio (object):
         # the object.
         """
 
+        self.self_loops = {}  # Key is ID, value is K of interaction
         for i in range(self.nGenes_):
             self.graph_[i] = {}
             self.graph_[i]['targets'] = []
@@ -155,6 +156,7 @@ class sergio (object):
             reader = csv.reader(f, delimiter=',')
             if (shared_coop_state <= 0):
                 for row in reader:
+                    currNode = np.int(row[0])  # Keep track of what node we're populating
                     nRegs = np.int(row[1])
                     ##################### Raise Error ##########################
                     if nRegs == 0:
@@ -165,21 +167,26 @@ class sergio (object):
                     currInteraction = []
                     currParents = []
                     for regId, K, C_state in zip(row[2: 2 + nRegs], row[2+nRegs : 2+2*nRegs], row[2+2*nRegs : 2+3*nRegs]):
+                        if regId == currNode:
+                            # SELF LOOP! Keep track of regId, K in dictionary
+                            self.self_loops[currNode] = np.float(K)
+                            continue
                         currInteraction.append((np.int(regId), np.float(K), np.float(C_state), 0)) # last zero shows half-response, it is modified in another method
                         allRegs.append(np.int(regId))
                         currParents.append(np.int(regId))
-                        self.graph_[np.int(regId)]['targets'].append(np.int(row[0]))
+                        self.graph_[np.int(regId)]['targets'].append(currNode)
 
-                    self.graph_[np.int(row[0])]['params'] = currInteraction
-                    self.graph_[np.int(row[0])]['regs'] = currParents
-                    self.graph_[np.int(row[0])]['level'] = -1 # will be modified later
-                    allTargets.append(np.int(row[0]))
+                    self.graph_[currNode]['params'] = currInteraction
+                    self.graph_[currNode]['regs'] = currParents
+                    self.graph_[currNode]['level'] = -1 # will be modified later
+                    allTargets.append(currNode)
 
                     #if self.dyn_:
                     #    for b in range(self.nBins_):
                     #        binDict[b].append(gene(np.int(row[0]),'T', b))
             else:
                 for indRow, row in enumerate(reader):
+                    currNode = np.int(np.float(row[0]))  # Keep track of what node we're populating
                     nRegs = np.int(np.float(row[1]))
                     ##################### Raise Error ##########################
                     if nRegs == 0:
@@ -190,15 +197,19 @@ class sergio (object):
                     currInteraction = []
                     currParents = []
                     for regId, K, in zip(row[2: 2 + nRegs], row[2+nRegs : 2+2*nRegs]):
+                        if regId == currNode:
+                            # SELF LOOP! Keep track of regId, K in dictionary
+                            self.self_loops[currNode] = np.float(K)
+                            continue
                         currInteraction.append((np.int(np.float(regId)), np.float(K), shared_coop_state, 0)) # last zero shows half-response, it is modified in another method
                         allRegs.append(np.int(np.float(regId)))
                         currParents.append(np.int(np.float(regId)))
                         self.graph_[np.int(np.float(regId))]['targets'].append(np.int(np.float(row[0])))
 
-                    self.graph_[np.int(np.float(row[0]))]['params'] = currInteraction
-                    self.graph_[np.int(np.float(row[0]))]['regs'] = currParents
-                    self.graph_[np.int(np.float(row[0]))]['level'] = -1 # will be modified later
-                    allTargets.append(np.int(np.float(row[0])))
+                    self.graph_[currNode]['params'] = currInteraction
+                    self.graph_[currNode]['regs'] = currParents
+                    self.graph_[currNode]['level'] = -1 # will be modified later
+                    allTargets.append(currNode)
 
                     #if self.dyn_:
                     #    for b in range(self.nBins_):
