@@ -171,7 +171,7 @@ class sergio (object):
                     currInteraction = []
                     currParents = []
                     for regId, K, C_state in zip(row[2: 2 + nRegs], row[2+nRegs : 2+2*nRegs], row[2+2*nRegs : 2+3*nRegs]):
-                        if regId == currNode:
+                        if np.int(regId) == currNode:
                             # SELF LOOP! Keep track of regId, K in dictionary
                             self.self_loops[currNode] = (np.float(K), np.float(C_state))
                             continue
@@ -205,7 +205,8 @@ class sergio (object):
                     currInteraction = []
                     currParents = []
                     for regId, K, in zip(row[2: 2 + nRegs], row[2+nRegs : 2+2*nRegs]):
-                        if regId == currNode:
+                        if np.int(np.float(regId)) == currNode:
+                            print('SELF-LOOP!')
                             # SELF LOOP! Keep track of regId, K in dictionary
                             self.self_loops[currNode] = (np.float(K), shared_coop_state)
                             continue
@@ -252,6 +253,7 @@ class sergio (object):
             print ("Error: Inconsistent number of genes")
             sys.exit()
 
+        print('Finding levels')
         self.find_levels_(self.graph_) # make sure that this modifies the graph
 
         if self.dyn_:
