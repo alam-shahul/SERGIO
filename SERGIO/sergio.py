@@ -214,7 +214,7 @@ class sergio (object):
                         currInteraction.append((np.int(np.float(regId)), np.float(K), shared_coop_state, 0)) # last zero shows half-response, it is modified in another method
                         allRegs.append(np.int(np.float(regId)))
                         currParents.append(np.int(np.float(regId)))
-                        self.graph_[np.int(np.float(regId))]['targets'].append(np.int(np.float(row[0])))
+                        self.graph_[np.int(np.float(regId))]['targets'].append(currNode)
 
                     self.graph_[currNode]['params'] = currInteraction
                     self.graph_[currNode]['regs'] = currParents
