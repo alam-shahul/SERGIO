@@ -55,6 +55,7 @@ class sergio (object):
         self.noiseType_ = noise_type
         self.dyn_ = dynamics
         self.nConvSteps = np.zeros(number_bins) # This holds the number of simulated steps till convergence
+        self.self_loops = {}  # Key is ID, value is K of interaction
         if dynamics:
             self.bifurcationMat_ = np.array(bifurcation_matrix)
             self.binOrders_ = []
@@ -143,7 +144,6 @@ class sergio (object):
         # the object.
         """
 
-        self.self_loops = {}  # Key is ID, value is K of interaction
         for i in range(self.nGenes_):
             self.graph_[i] = {}
             self.graph_[i]['targets'] = []
@@ -163,13 +163,17 @@ class sergio (object):
                         print ("Error: a master regulator (#Regs = 0) appeared in input")
                         sys.exit()
                         ############################################################
+                    elif np.logical_and(nRegs == 1, np.int(row[2]) == currNode):
+                        # Master regulator autoregulation - don't want to write things in self.graph_
+                        self.self_loops[currNode] = (np.float(row[3]), np.float(row[4]))
+                        continue
 
                     currInteraction = []
                     currParents = []
                     for regId, K, C_state in zip(row[2: 2 + nRegs], row[2+nRegs : 2+2*nRegs], row[2+2*nRegs : 2+3*nRegs]):
                         if regId == currNode:
                             # SELF LOOP! Keep track of regId, K in dictionary
-                            self.self_loops[currNode] = np.float(K)
+                            self.self_loops[currNode] = (np.float(K), np.float(C_state))
                             continue
                         currInteraction.append((np.int(regId), np.float(K), np.float(C_state), 0)) # last zero shows half-response, it is modified in another method
                         allRegs.append(np.int(regId))
@@ -193,13 +197,17 @@ class sergio (object):
                         print ("Error: a master regulator (#Regs = 0) appeared in input")
                         sys.exit()
                         ############################################################
+                    elif np.logical_and(nRegs == 1, np.int(np.float(row[2])) == currNode):
+                        # Master regulator autoregulation - don't want to write things in self.graph_
+                        self.self_loops[currNode] = (np.float(row[3]), shared_coop_state)
+                        continue
 
                     currInteraction = []
                     currParents = []
                     for regId, K, in zip(row[2: 2 + nRegs], row[2+nRegs : 2+2*nRegs]):
                         if regId == currNode:
                             # SELF LOOP! Keep track of regId, K in dictionary
-                            self.self_loops[currNode] = np.float(K)
+                            self.self_loops[currNode] = (np.float(K), shared_coop_state)
                             continue
                         currInteraction.append((np.int(np.float(regId)), np.float(K), shared_coop_state, 0)) # last zero shows half-response, it is modified in another method
                         allRegs.append(np.int(np.float(regId)))
@@ -238,6 +246,9 @@ class sergio (object):
 
 
         if (len(self.master_regulators_idx_) + np.shape(allTargets)[0] != self.nGenes_):
+            print(len(self.master_regulators_idx_))
+            print(np.shape(allTargets)[0])
+            print(self.nGenes_)
             print ("Error: Inconsistent number of genes")
             sys.exit()
 
@@ -398,7 +409,12 @@ class sergio (object):
 
         if (type == 'MR'):
             rates = self.graph_[bin_list[0].ID]['rates']
-            return [rates[gb.binID] for gb in bin_list]
+            basal = [rates[gb.binID] for gb in bin_list]
+            '''autoreg = np.zeros(len(basal))
+            for gb in bin_list:
+                if gb.ID in self.self_loops:
+                    autoreg[] = '''
+            return basal
 
         else:
             params = self.graph_[bin_list[0].ID]['params']
@@ -408,16 +424,22 @@ class sergio (object):
             currStep = bin_list[0].simulatedSteps_
             lastLayerGenes = np.copy(self.level2verts_[level + 1])
             hillMatrix = np.zeros((len(regIndices), len(binIndices)))
+            autoreg = np.zeros(len(binIndices))
 
             for tupleIdx, rIdx in enumerate(regIndices):
-		#print "Here"
+		        #print "Here"
                 regGeneLevel = self.gID_to_level_and_idx[rIdx][0]
                 regGeneIdx = self.gID_to_level_and_idx[rIdx][1]
                 regGene_allBins = self.level2verts_[regGeneLevel][regGeneIdx]
                 for colIdx, bIdx in enumerate(binIndices):
                     hillMatrix[tupleIdx, colIdx] = self.hill_(regGene_allBins[bIdx].Conc[currStep], params[tupleIdx][3], params[tupleIdx][2], params[tupleIdx][1] < 0)
+                    if binIndices[colIdx] in self.self_loops:
+                        # Add autoregulation interaction
+                        ar_params = self.self_loops[binIndices[bIdx]]
+                        # Approximate half-response as mean concentration up to this time step
+                        autoreg[colIdx] = np.abs(ar_params[0]) * self.hill_(bin_list[colIdx].Conc[-1], np.mean(bin_list[colIdx].Conc), ar_params[1], ar_params[0] < 0)
 
-            return np.matmul(Ks, hillMatrix)
+            return np.matmul(Ks, hillMatrix) + autoreg
 
 
     def CLE_simulator_(self, level):
