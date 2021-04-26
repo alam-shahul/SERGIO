@@ -198,6 +198,7 @@ class sergio (object):
                         sys.exit()
                         ############################################################
                     elif np.logical_and(nRegs == 1, np.int(np.float(row[2])) == currNode):
+                        #print('MR SELF-LOOP!')
                         # Master regulator autoregulation - don't want to write things in self.graph_
                         self.self_loops[currNode] = (np.float(row[3]), shared_coop_state)
                         continue
@@ -206,7 +207,7 @@ class sergio (object):
                     currParents = []
                     for regId, K, in zip(row[2: 2 + nRegs], row[2+nRegs : 2+2*nRegs]):
                         if np.int(np.float(regId)) == currNode:
-                            print('SELF-LOOP!')
+                            #print('SELF-LOOP!')
                             # SELF LOOP! Keep track of regId, K in dictionary
                             self.self_loops[currNode] = (np.float(K), shared_coop_state)
                             continue
@@ -408,15 +409,20 @@ class sergio (object):
         calculates production rates for the input list of gene objects in different bins but all associated to a single gene ID
         """
         type = bin_list[0].Type
+        flag = False
 
         if (type == 'MR'):
             rates = self.graph_[bin_list[0].ID]['rates']
             basal = [rates[gb.binID] for gb in bin_list]
-            '''autoreg = np.zeros(len(basal))
+            autoreg = np.zeros(len(basal))
             for gb in bin_list:
                 if gb.ID in self.self_loops:
-                    autoreg[] = '''
-            return basal
+                    flag = True
+                    ar_params = self.self_loops[gb.ID]
+                    autoreg[gb.binID] = np.abs(ar_params[0]) * self.hill_(gb.Conc[-1], np.mean(gb.Conc), ar_params[1], ar_params[0] < 0)
+            if flag:
+                assert(np.linalg.norm(autoreg) > 0)
+            return basal + autoreg
 
         else:
             params = self.graph_[bin_list[0].ID]['params']
@@ -427,6 +433,7 @@ class sergio (object):
             lastLayerGenes = np.copy(self.level2verts_[level + 1])
             hillMatrix = np.zeros((len(regIndices), len(binIndices)))
             autoreg = np.zeros(len(binIndices))
+            #print([gb.ID for gb in bin_list])
 
             for tupleIdx, rIdx in enumerate(regIndices):
 		        #print "Here"
@@ -435,12 +442,11 @@ class sergio (object):
                 regGene_allBins = self.level2verts_[regGeneLevel][regGeneIdx]
                 for colIdx, bIdx in enumerate(binIndices):
                     hillMatrix[tupleIdx, colIdx] = self.hill_(regGene_allBins[bIdx].Conc[currStep], params[tupleIdx][3], params[tupleIdx][2], params[tupleIdx][1] < 0)
-                    if binIndices[colIdx] in self.self_loops:
+                    if bin_list[bIdx].ID in self.self_loops:
                         # Add autoregulation interaction
-                        ar_params = self.self_loops[binIndices[bIdx]]
+                        ar_params = self.self_loops[bin_list[bIdx].ID]
                         # Approximate half-response as mean concentration up to this time step
-                        autoreg[colIdx] = np.abs(ar_params[0]) * self.hill_(bin_list[colIdx].Conc[-1], np.mean(bin_list[colIdx].Conc), ar_params[1], ar_params[0] < 0)
-
+                        autoreg[colIdx] = np.abs(ar_params[0]) * self.hill_(bin_list[bIdx].Conc[-1], np.mean(bin_list[bIdx].Conc), ar_params[1], ar_params[0] < 0)
             return np.matmul(Ks, hillMatrix) + autoreg
 
 
