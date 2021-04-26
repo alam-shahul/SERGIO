@@ -409,19 +409,15 @@ class sergio (object):
         calculates production rates for the input list of gene objects in different bins but all associated to a single gene ID
         """
         type = bin_list[0].Type
-        flag = False
 
         if (type == 'MR'):
             rates = self.graph_[bin_list[0].ID]['rates']
             basal = [rates[gb.binID] for gb in bin_list]
             autoreg = np.zeros(len(basal))
-            for gb in bin_list:
-                if gb.ID in self.self_loops:
-                    flag = True
+            if bin_list[0].ID in self.self_loops:
+                for gb in bin_list:
                     ar_params = self.self_loops[gb.ID]
                     autoreg[gb.binID] = np.abs(ar_params[0]) * self.hill_(gb.Conc[-1], np.mean(gb.Conc), ar_params[1], ar_params[0] < 0)
-            if flag:
-                assert(np.linalg.norm(autoreg) > 0)
             return basal + autoreg
 
         else:
@@ -526,7 +522,7 @@ class sergio (object):
                     ##########################################################################
                     # if not gObj.converged_:
                     #     gObj.append_dConc(curr_dx[bIDX])
-                    #
+                    # 
                     # #Check Convergence
                     # if (gObj.converged_ == False and gObj.simulatedSteps_ >= 2 * self.winLen_):
                     #     # this is the previous convergence criteria: np.abs(np.mean( gObj.dConc[-self.winLen_:] )) <= self.tol_
@@ -534,7 +530,7 @@ class sergio (object):
                     #     #sample1 = gObj.Conc[-2*self.winLen_:-1*self.winLen_]
                     #     #sample2 = gObj.Conc[-1*self.winLen_:]
                     #     #_,p = ttest_ind(sample1,sample2)
-                    #
+                    # 
                     #     #if p >= self.tol_:
                     #     #TODO Do something about 2495 below. This is to gaurantee that the size meets the safety_steps threshhold. Somehow sync them
                     #     # or try to get rid of it by making a better convergence criteria
