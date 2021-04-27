@@ -384,14 +384,17 @@ class sergio (object):
 
         Note: calculate_half_response_ should be run before this method
         """
-
+        Kii = 0
         currGenes = self.level2verts_[level]
         for g in currGenes:
+            if g[0].ID in self.self_loops:
+                Kii = self.self_loops[g[0].ID][0]
+
             if g[0].Type == 'MR':
                 allBinRates = self.graph_[g[0].ID]['rates']
 
                 for bIdx, rate in enumerate(allBinRates):
-                    g[bIdx].append_Conc(np.true_divide(rate, self.decayVector_[g[0].ID]))
+                    g[bIdx].append_Conc(np.true_divide(rate, self.decayVector_[g[0].ID] - np.abs(Kii) / 2))
 
             else:
                 params = self.graph_[g[0].ID]['params']
@@ -402,7 +405,7 @@ class sergio (object):
                         meanExp = self.meanExpression[interTuple[0], bIdx]
                         rate += np.abs(interTuple[1]) * self.hill_(meanExp, interTuple[3], interTuple[2], interTuple[1] < 0)
 
-                    g[bIdx].append_Conc(np.true_divide(rate, self.decayVector_[g[0].ID]))
+                    g[bIdx].append_Conc(np.true_divide(rate, self.decayVector_[g[0].ID] - np.abs(Kii) / 2))
 
     def calculate_prod_rate_(self, bin_list, level):
         """
