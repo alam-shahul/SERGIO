@@ -394,7 +394,7 @@ class sergio (object):
                 allBinRates = self.graph_[g[0].ID]['rates']
 
                 for bIdx, rate in enumerate(allBinRates):
-                    g[bIdx].append_Conc(np.true_divide(rate, self.decayVector_[g[0].ID] - np.abs(Kii) / 2))
+                    g[bIdx].append_Conc(np.true_divide(rate + np.abs(Kii) / 2, self.decayVector_[g[0].ID]))
 
             else:
                 params = self.graph_[g[0].ID]['params']
@@ -405,7 +405,7 @@ class sergio (object):
                         meanExp = self.meanExpression[interTuple[0], bIdx]
                         rate += np.abs(interTuple[1]) * self.hill_(meanExp, interTuple[3], interTuple[2], interTuple[1] < 0)
 
-                    g[bIdx].append_Conc(np.true_divide(rate, self.decayVector_[g[0].ID] - np.abs(Kii) / 2))
+                    g[bIdx].append_Conc(np.true_divide(rate + np.abs(Kii) / 2, self.decayVector_[g[0].ID]))
 
     def calculate_prod_rate_(self, bin_list, level):
         """
