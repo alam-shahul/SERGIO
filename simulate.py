@@ -21,37 +21,37 @@ sim.simulate()
 expr = sim.getExpressions()
 expr_clean = np.concatenate(expr, axis=1)
 
-
-# Add technical noise
-"""
-Add outlier genes
-"""
-expr_O = sim.outlier_effect(expr, outlier_prob = 0.01, mean = 0.8, scale = 1)
-
-"""
-Add Library Size Effect
-"""
-libFactor, expr_O_L = sim.lib_size_effect(expr_O, mean = 4.6, scale = 0.4)
-
-"""
-Add Dropouts
-"""
-binary_ind = sim.dropout_indicator(expr_O_L, shape = 6.5, percentile = 82)
-expr_O_L_D = np.multiply(binary_ind, expr_O_L)
-
-"""
-Convert to UMI count
-"""
-count_matrix = sim.convert_to_UMIcounts(expr_O_L_D)
-
-"""
-Make a 2d gene expression matrix
-"""
-count_matrix = np.concatenate(count_matrix, axis = 1)
-
 # Write out final count matrix
-path = os.path.expanduser('Output_with_Autoregulation/ds1_ar_counts.txt')
-np.savetxt(path, count_matrix)
+np.save('Output_with_Autoregulation/ds1_ar_clean.npy', expr_clean)
+
+for replicate in range(100):
+    """
+    Add outlier genes
+    """
+    expr_O = sim.outlier_effect(expr, outlier_prob=0.01, mean=0.8, scale=1)
+
+    """
+    Add Library Size Effect
+    """
+    libFactor, expr_O_L = sim.lib_size_effect(expr_O, mean=4.6, scale=0.4)
+
+    """
+    Add Dropouts
+    """
+    binary_ind = sim.dropout_indicator(expr_O_L, shape=6.5, percentile=82)
+    expr_O_L_D = np.multiply(binary_ind, expr_O_L)
+
+    """
+    Convert to UMI count
+    """
+    count_matrix = sim.convert_to_UMIcounts(expr_O_L_D)
+
+    """
+    Make a 2d gene expression matrix
+    """
+    count_matrix = np.concatenate(count_matrix, axis=1)
+
+    np.save("Output_with_Autoregulation/ds1_ar_noisy_replicate_{}.npy".format(replicate), count_matrix)
 
 # Simulate data for 1200 genes
 sim = sergio(number_genes=1200, number_bins=9, number_sc=300, noise_params=1, decays=0.8, sampling_state=15, noise_type='dpd')
@@ -60,33 +60,34 @@ sim.simulate()
 expr = sim.getExpressions()
 expr_clean = np.concatenate(expr, axis=1)
 
-# Add technical noise
-"""
-Add outlier genes
-"""
-expr_O = sim.outlier_effect(expr, outlier_prob = 0.01, mean = 0.8, scale = 1)
-
-"""
-Add Library Size Effect
-"""
-libFactor, expr_O_L = sim.lib_size_effect(expr_O, mean = 4.6, scale = 0.4)
-
-"""
-Add Dropouts
-"""
-binary_ind = sim.dropout_indicator(expr_O_L, shape = 6.5, percentile = 82)
-expr_O_L_D = np.multiply(binary_ind, expr_O_L)
-
-"""
-Convert to UMI count
-"""
-count_matrix = sim.convert_to_UMIcounts(expr_O_L_D)
-
-"""
-Make a 2d gene expression matrix
-"""
-count_matrix = np.concatenate(count_matrix, axis = 1)
-
 # Write out final count matrix
-path = os.path.expanduser('Output_with_Autoregulation/ds4_ar_counts.txt')
-np.savetxt(path, count_matrix)
+np.save('Output_with_Autoregulation/ds4_ar_clean.npy', expr_clean)
+
+for replicate in range(100):
+    """
+    Add outlier genes
+    """
+    expr_O = sim.outlier_effect(expr, outlier_prob=0.01, mean=0.8, scale=1)
+
+    """
+    Add Library Size Effect
+    """
+    libFactor, expr_O_L = sim.lib_size_effect(expr_O, mean=4.6, scale=0.4)
+
+    """
+    Add Dropouts
+    """
+    binary_ind = sim.dropout_indicator(expr_O_L, shape=6.5, percentile=82)
+    expr_O_L_D = np.multiply(binary_ind, expr_O_L)
+
+    """
+    Convert to UMI count
+    """
+    count_matrix = sim.convert_to_UMIcounts(expr_O_L_D)
+
+    """
+    Make a 2d gene expression matrix
+    """
+    count_matrix = np.concatenate(count_matrix, axis=1)
+
+    np.save("Output_with_Autoregulation/ds4_ar_noisy_replicate_{}.npy".format(replicate), count_matrix)
